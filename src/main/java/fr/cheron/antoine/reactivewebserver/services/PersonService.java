@@ -1,7 +1,8 @@
 package fr.cheron.antoine.reactivewebserver.services;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,12 +22,12 @@ public class PersonService {
   public PersonService(Scheduler scheduler) {
     this.scheduler = scheduler;
 
-    this.persons = Arrays.asList(
+    this.persons = Stream.of(
       new Person("1", "Foo", "Bar", 50),
       new Person("2", "Toto", "Tuto", 30),
       new Person("3", "John", "Doe", 30),
       new Person("4", "John", "Duff", 16)
-    );
+    ).collect(Collectors.toList());
   }
 
   public Flux<Person> list() {
@@ -34,12 +35,11 @@ public class PersonService {
   }
 
   public Mono<Person> findById(String id) {
-    return MonoUtils.fromOptionalWithNotFoundException(
-      this.persons.stream().
-        filter((person) -> person.getId().equals(id)).
-        findFirst(),
-      "person " + id
-    ).subscribeOn(this.scheduler);
+    return Mono.fromSupplier(() -> this.persons). // to make sure nothing gets executed until one subscribes to the mono
+      flatMap((persons) -> MonoUtils.fromOptionalWithNotFoundException(
+        persons.stream().filter((person) -> person.getId().equals(id)).findFirst(),
+        "person " + id
+      )).subscribeOn(this.scheduler);
   }
 
   public Mono<Boolean> deleteOneById(String id) {
@@ -54,8 +54,9 @@ public class PersonService {
   public Mono<Boolean> createOne(Person person) {
     return this.findById(person.getId()).
       flatMap((notUsed) -> Mono.<Boolean>error(new ForbiddenResourceOverrideException())).
-      switchIfEmpty(
-        Mono.fromCallable(() -> {
+      onErrorResume(
+        NotFoundResourceException.class,
+        (notUsedException) -> Mono.fromCallable(() -> {
           this.persons.add(person);
           return true;
         })
