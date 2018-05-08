@@ -1,4 +1,4 @@
-package fr.cheron.antoine.reactivewebserver.webflux;
+package fr.cheron.antoine.reactivewebserver;
 
 import org.springframework.http.server.reactive.HttpHandler;
 import org.springframework.http.server.reactive.ReactorHttpHandlerAdapter;
@@ -10,8 +10,8 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 import reactor.ipc.netty.http.server.HttpServer;
 
-import fr.cheron.antoine.reactivewebserver.Config;
 import fr.cheron.antoine.reactivewebserver.services.PersonService;
+import fr.cheron.antoine.reactivewebserver.webflux.PersonApi;
 
 public class Main {
 
