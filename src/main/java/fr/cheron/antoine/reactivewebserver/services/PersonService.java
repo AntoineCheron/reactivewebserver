@@ -1,6 +1,7 @@
 package fr.cheron.antoine.reactivewebserver.services;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -8,6 +9,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
+import fr.cheron.antoine.reactivewebserver.Config;
 import fr.cheron.antoine.reactivewebserver.exceptions.ForbiddenResourceOverrideException;
 import fr.cheron.antoine.reactivewebserver.exceptions.NotFoundResourceException;
 import fr.cheron.antoine.reactivewebserver.domain.Person;
@@ -15,23 +17,19 @@ import fr.cheron.antoine.reactivewebserver.utils.MonoUtils;
 
 public class PersonService {
 
-  private final Scheduler scheduler;
-
   private final List<Person> persons;
 
-  public PersonService(Scheduler scheduler) {
-    this.scheduler = scheduler;
-
+  public PersonService() {
     this.persons = Stream.of(
       new Person("1", "Foo", "Bar", 50),
       new Person("2", "Toto", "Tuto", 30),
       new Person("3", "John", "Doe", 30),
       new Person("4", "John", "Duff", 16)
-    ).collect(Collectors.toList());
+    ).collect(Collectors.toCollection(CopyOnWriteArrayList::new));
   }
 
   public Flux<Person> list() {
-    return Flux.fromIterable(this.persons).subscribeOn(this.scheduler);
+    return Flux.fromIterable(this.persons).subscribeOn(Config.APPLICATION_SCHEDULER);
   }
 
   public Mono<Person> findById(String id) {
@@ -39,7 +37,7 @@ public class PersonService {
       flatMap((persons) -> MonoUtils.fromOptionalWithNotFoundException(
         persons.stream().filter((person) -> person.getId().equals(id)).findFirst(),
         "person " + id
-      )).subscribeOn(this.scheduler);
+      )).subscribeOn(Config.APPLICATION_SCHEDULER);
   }
 
   public Mono<Boolean> deleteOneById(String id) {
@@ -48,7 +46,7 @@ public class PersonService {
       flatMap((succeeded) ->
         succeeded ? Mono.just(true) : Mono.error(new NotFoundResourceException("person " + id))
       ).
-      subscribeOn(this.scheduler);
+      subscribeOn(Config.APPLICATION_SCHEDULER);
   }
 
   public Mono<Boolean> createOne(Person person) {
@@ -60,7 +58,7 @@ public class PersonService {
           this.persons.add(person);
           return true;
         })
-      ).subscribeOn(this.scheduler);
+      ).subscribeOn(Config.APPLICATION_SCHEDULER);
   }
 
   public Mono<Boolean> updateOneById(Person person) {
@@ -70,7 +68,7 @@ public class PersonService {
         this.persons.add(person);
         return true;
       }).
-      subscribeOn(this.scheduler);
+      subscribeOn(Config.APPLICATION_SCHEDULER);
   }
 
 }

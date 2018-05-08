@@ -1,4 +1,4 @@
-package fr.cheron.antoine.reactivewebserver.webflux;
+package fr.cheron.antoine.reactivewebserver.rest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 import reactor.core.publisher.Mono;
 
+import fr.cheron.antoine.reactivewebserver.Config;
 import fr.cheron.antoine.reactivewebserver.exceptions.ForbiddenResourceOverrideException;
 import fr.cheron.antoine.reactivewebserver.exceptions.NotFoundResourceException;
 import fr.cheron.antoine.reactivewebserver.services.PersonService;
@@ -52,7 +53,8 @@ public class PersonApi {
       collectList().
       flatMap(Json::write).
       flatMap(Responses::ok).
-      onErrorResume(JsonProcessingException.class, Responses::internalServerError);
+      onErrorResume(JsonProcessingException.class, Responses::internalServerError).
+      subscribeOn(Config.APPLICATION_SCHEDULER);
   }
 
   private Mono<ServerResponse> getOnePersonById(ServerRequest request) {
@@ -61,7 +63,8 @@ public class PersonApi {
       flatMap(Json::write).
       flatMap(Responses::ok).
       onErrorResume(NotFoundResourceException.class, Responses::notFound).
-      onErrorResume(JsonProcessingException.class,Responses::internalServerError);
+      onErrorResume(JsonProcessingException.class,Responses::internalServerError).
+      subscribeOn(Config.APPLICATION_SCHEDULER);
   }
 
   private Mono<ServerResponse> updateOnePersonById(ServerRequest request) {
@@ -70,14 +73,16 @@ public class PersonApi {
       flatMap(this.personService::updateOneById).
       flatMap((success) -> success ? Responses.noContent() : Responses.internalServerError()).
       onErrorResume(NotFoundResourceException.class, Responses::notFound).
-      onErrorResume(InvalidRequestBodyException.class, Responses::badRequest);
+      onErrorResume(InvalidRequestBodyException.class, Responses::badRequest).
+      subscribeOn(Config.APPLICATION_SCHEDULER);
   }
 
   private Mono<ServerResponse> deleteOnePersonById(ServerRequest request) {
     return this.personService.
       deleteOneById(request.pathVariable(PERSON_ID_PATH_VARIABLE)).
       flatMap((success) -> success ? Responses.noContent() : Responses.internalServerError()).
-      onErrorResume(NotFoundResourceException.class, Responses::notFound);
+      onErrorResume(NotFoundResourceException.class, Responses::notFound).
+      subscribeOn(Config.APPLICATION_SCHEDULER);
   }
 
   private Mono<ServerResponse> createOnePerson(ServerRequest request) {
@@ -87,7 +92,8 @@ public class PersonApi {
       flatMap((success) -> success ? Responses.noContent() : Responses.internalServerError()).
       onErrorResume(NotFoundResourceException.class, Responses::notFound).
       onErrorResume(ForbiddenResourceOverrideException.class, Responses::forbidden).
-      onErrorResume(InvalidRequestBodyException.class, Responses::badRequest);
+      onErrorResume(InvalidRequestBodyException.class, Responses::badRequest).
+      subscribeOn(Config.APPLICATION_SCHEDULER);
   }
 
   private Mono<Person> readPersonFromRequestBody(String body) {

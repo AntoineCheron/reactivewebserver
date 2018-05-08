@@ -11,12 +11,12 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.ipc.netty.http.server.HttpServer;
 
 import fr.cheron.antoine.reactivewebserver.services.PersonService;
-import fr.cheron.antoine.reactivewebserver.webflux.PersonApi;
+import fr.cheron.antoine.reactivewebserver.rest.PersonApi;
 
 public class Main {
 
   public static void main(String[] args) {
-    final PersonService personService = new PersonService(Config.APPLICATION_SCHEDULER);
+    final PersonService personService = new PersonService();
     final PersonApi personApi = new PersonApi(personService);
 
     final RouterFunction<ServerResponse> routerFunction = RouterFunctions.
