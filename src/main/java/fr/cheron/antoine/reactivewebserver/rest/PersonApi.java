@@ -14,7 +14,7 @@ import fr.cheron.antoine.reactivewebserver.Config;
 import fr.cheron.antoine.reactivewebserver.exceptions.ForbiddenResourceOverrideException;
 import fr.cheron.antoine.reactivewebserver.exceptions.NotFoundResourceException;
 import fr.cheron.antoine.reactivewebserver.services.PersonService;
-import fr.cheron.antoine.reactivewebserver.json.Json;
+import fr.cheron.antoine.reactivewebserver.json.JsonWriter;
 import fr.cheron.antoine.reactivewebserver.utils.Responses;
 import fr.cheron.antoine.reactivewebserver.domain.Person;
 import fr.cheron.antoine.reactivewebserver.exceptions.InvalidRequestBodyException;
@@ -51,7 +51,7 @@ public class PersonApi {
     return this.personService.
       list().
       collectList().
-      flatMap(Json::write).
+      flatMap(JsonWriter::write).
       flatMap(Responses::ok).
       onErrorResume(JsonProcessingException.class, Responses::internalServerError).
       subscribeOn(Config.APPLICATION_SCHEDULER);
@@ -60,7 +60,7 @@ public class PersonApi {
   private Mono<ServerResponse> getOnePersonById(ServerRequest request) {
     return this.personService.
       findById(request.pathVariable(PERSON_ID_PATH_VARIABLE)).
-      flatMap(Json::write).
+      flatMap(JsonWriter::write).
       flatMap(Responses::ok).
       onErrorResume(NotFoundResourceException.class, Responses::notFound).
       onErrorResume(JsonProcessingException.class,Responses::internalServerError).
